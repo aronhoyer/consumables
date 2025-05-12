@@ -1,6 +1,8 @@
 package main
 
 import (
+	"database/sql"
+	"errors"
 	"html/template"
 	"log/slog"
 	"net/http"
@@ -39,6 +41,65 @@ func home(logger *slog.Logger) http.Handler {
 
 		if err := t.ExecuteTemplate(w, "index", nil); err != nil {
 			logger.Error("failed to execute temlpate", "err", err)
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	})
+}
+
+type ConversionItem struct {
+	Name                  string
+	BomID                 string
+	ConversionFactor      float32
+	DefaultQuantity       int8
+	DestinationItemNumber string
+	SourceItemNumber      string
+	DestinationUnit       string
+}
+
+func getItem(logger *slog.Logger, db *sql.DB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		row := db.QueryRow("select * from item_convert where source_item_number=$1", r.URL.Query().Get("item"))
+
+		var item ConversionItem
+
+		err := row.Scan(
+			&item.Name,
+			&item.BomID,
+			&item.ConversionFactor,
+			&item.DefaultQuantity,
+			&item.DestinationItemNumber,
+			&item.SourceItemNumber,
+			&item.DestinationUnit,
+		)
+
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				w.WriteHeader(http.StatusNotFound)
+			} else {
+				logger.Error("failed to scan row", "item", r.URL.Query().Get("item"), "err", err)
+				w.WriteHeader(http.StatusInternalServerError)
+			}
+			return
+		}
+
+		t, err := template.ParseFiles("./web/html/pages/index.html")
+		if err != nil {
+			logger.Error("failed to parse template", "err", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		var pd struct {
+			Form  map[string]string
+			Error map[string]string
+			Item  ConversionItem
+		}
+		pd.Form["item"] = item.SourceItemNumber
+		pd.Form["quantity"] = "1"
+		pd.Item = item
+
+		if err := t.ExecuteTemplate(w, "form", pd); err != nil {
+			logger.Error("failed to execute template", "err", err)
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	})
