@@ -1,3 +1,4 @@
+{{block "index" .}}
 <!DOCTYPE html>
 <html lang="nb">
 
@@ -11,8 +12,23 @@
 
 <body>
 	<main>
-		<h1>Hello world!</h1>
+		{{template "form" .}}
 	</main>
 </body>
 
 </html>
+{{end}}
+
+{{block "form" .}}
+<form>
+	<div class="input">
+		<label for="item" class="input__label">Varenummer</label>
+		<input inputmode="numeric" name="item" id="item" class="inbut__field" value="{{if .Form.item}}.Form.item{{end}}"
+			hx-get="/items" hx-trigger="keyup change delay:200ms" hx-sync="this:replace">
+	</div>
+	<div class="input">
+		<label for="quantity" class="input__label">Antall kjøringer</label>
+		<input inputmode="numeric" name="quantity" id="quantity" class="inbut__field" value="">
+	</div>
+</form>
+{{end}}

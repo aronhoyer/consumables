@@ -37,7 +37,7 @@ func home(logger *slog.Logger) http.Handler {
 			return
 		}
 
-		if err := t.Execute(w, nil); err != nil {
+		if err := t.ExecuteTemplate(w, "index", nil); err != nil {
 			logger.Error("failed to execute temlpate", "err", err)
 			w.WriteHeader(http.StatusInternalServerError)
 		}
