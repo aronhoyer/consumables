@@ -20,32 +20,74 @@
 
 <body>
 	<main>
-		{{template "form" .}}
+		<section>
+			{{template "form" .}}
+		</section>
+
+		<section>
+			{{if .Conversion}}
+			<div class="conversion">
+				<p>{{.Item.Name}}</p>
+				<p>{{.Form.quantity}} -&gt; {{.Item.DefaultQuantity}} -&gt; {{.Conversion}} {{.Item.DestinationUnit}}
+				</p>
+			</div>
+			{{end}}
+		</section>
+
+		<section class="actions actions--stacked">
+			<button type="button" class="button button--primary" onclick="openDialog('conf-diag')">Legg til</button>
+		</section>
 	</main>
-	
-	<div>
-		{{if .Conversion}}
-			<p>{{.Item.Name}}</p>
-			<p>{{.Form.quantity}} -&gt; {{.Item.DefaultQuantity}} -&gt; {{.Conversion}} {{.Item.DestinationUnit}}</p>
-		{{end}}
-	</div>
+
+	<dialog data-js-target="conf-diag" class="dialog">
+		<div class="dialog__header">
+			<p>Bekreft</p>
+		</div>
+
+		<div class="dialog__body">
+			<p>{{.Form.quantity}} stk [{{.Item.SourceItemNumber}}] -&gt; {{.Conversion}} {{.Item.DestinationUnit}}
+				[{{.Item.DestinationItemNumber}}]</p>
+		</div>
+
+		<div class="dialog__actions actions actions--stacked">
+			<button type="button" class="button button--primary">Bekreft</button>
+			<button type="button" class="button button--danger" onclick="closeDialog('conf-diag')">Avbryt</button>
+		</div>
+	</dialog>
+
+	<script>
+		window.openDialog = function openDialog(target) {
+			const dialog = document.querySelector(`[data-js-target=${target}]`)
+			if (dialog) {
+				dialog.showModal()
+			}
+		}
+
+		window.closeDialog = function closeDialog(target) {
+			const dialog = document.querySelector(`[data-js-target=${target}]`)
+			if (dialog) {
+				dialog.close()
+			}
+		}
+	</script>
 </body>
 
 </html>
 {{end}}
 
 {{block "form" .}}
-<form data-hx-target="form">
+<form data-hx-target="form" class="form">
 	<div class="input">
 		<label for="item" class="input__label">Varenummer</label>
-		<input
-			inputmode="numeric" name="item" id="item" class="inbut__field" value="{{if .Form.item}}{{.Form.item}}{{end}}"
-			hx-post="/convert" hx-trigger="keyup changed delay:200ms" hx-sync="this:replace" hx-target="body" hx-swap="outerHTML">
+		<input inputmode="numeric" name="item" id="item" class="input__field"
+			value="{{if .Form.item}}{{.Form.item}}{{end}}" hx-post="/convert" hx-trigger="keyup changed delay:200ms"
+			hx-sync="this:replace" hx-target="body" hx-swap="outerHTML">
 	</div>
 	<div class="input">
 		<label for="quantity" class="input__label">Antall kjøringer</label>
-		<input inputmode="numeric" name="quantity" id="quantity" class="inbut__field" value="{{if .Form.quantity}}{{.Form.quantity}}{{end}}"
-			hx-post="/convert" hx-trigger="keyup changed delay:200ms" hx-sync="this:replace" hx-target="body" hx-swap="outerHTML">
+		<input inputmode="numeric" name="quantity" id="quantity" class="input__field"
+			value="{{if .Form.quantity}}{{.Form.quantity}}{{end}}" hx-post="/convert"
+			hx-trigger="keyup changed delay:200ms" hx-sync="this:replace" hx-target="body" hx-swap="outerHTML">
 	</div>
 </form>
 {{end}}
